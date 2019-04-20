@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group 'me.vankka'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile ('net.dv8tion:JDA:3.8.3_462') { exclude module: 'opus-java' }
+}
