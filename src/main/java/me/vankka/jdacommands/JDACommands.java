@@ -197,8 +197,11 @@ public class JDACommands {
         if (!content.startsWith(prefix) && !mentionPrefix)
             return;
 
-        String[] split = content.contains(" ") ? content.split(" ") : new String[]{content};
-        String cmd = mentionPrefix ? split[1] : split[0].replaceFirst(prefix, "");
+        List<String> arguments = Arrays.asList(content.contains(" ") ? content.split(" ") : new String[]{content});
+        if (mentionPrefix)
+            arguments.remove(0);
+
+        String cmd = mentionPrefix ? arguments.get(0) : arguments.get(0).replaceFirst(prefix, "");
 
         List<Command> commands = new ArrayList<>();
         for (CommandCategory commandCategory : commandCategories)
@@ -217,7 +220,7 @@ public class JDACommands {
             return;
 
         try {
-            defaultResultHandler(event, command.execute(event));
+            defaultResultHandler(event, command.execute(event, arguments));
         } catch (PermissionException exception) {
             sendMessageSafely(event, Emoji.X + " Missing permission, " +
                     "`" + exception.getPermission().getName() + "`");

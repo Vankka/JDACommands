@@ -11,6 +11,6 @@ public interface Command {
     List<CommandProperty> getProperties();
     List<Permission> getBotRequiredPermissions();
 
-    CommandResult execute(CommandEvent commandEvent) throws PermissionException;
+    CommandResult execute(CommandEvent commandEvent, List<String> arguments) throws PermissionException;
 
 }
