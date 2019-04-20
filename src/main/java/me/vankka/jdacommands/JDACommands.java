@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -197,7 +198,8 @@ public class JDACommands {
         if (!content.startsWith(prefix) && !mentionPrefix)
             return;
 
-        List<String> arguments = Arrays.asList(content.contains(" ") ? content.split(" ") : new String[]{content});
+        List<String> arguments = new ArrayList<>(content.contains(" ")
+                ? Arrays.asList(content.split(" ")) : Collections.singletonList(content));
         if (mentionPrefix)
             arguments.remove(0); // remove mention
 
