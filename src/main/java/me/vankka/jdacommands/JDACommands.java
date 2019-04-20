@@ -188,18 +188,16 @@ public class JDACommands {
 
     public void defaultEventProcessor(CommandEvent event) {
         String content = event.getMessage().getContentRaw();
-        if (!content.contains(" "))
-            return;
 
         String prefix = prefixProvider.apply(event.getGuild());
         String mention = event.getGuild() != null ? event.getGuild().getSelfMember()
                 .getAsMention() : event.getJDA().getSelfUser().getAsMention();
 
-        boolean mentionPrefix = content.startsWith(mention) && allowMentionAsPrefix;
+        boolean mentionPrefix = content.contains(" ") && content.startsWith(mention) && allowMentionAsPrefix;
         if (!content.startsWith(prefix) && !mentionPrefix)
             return;
 
-        String[] split = content.split(" ");
+        String[] split = content.contains(" ") ? content.split(" ") : new String[0];
         String cmd = mentionPrefix ? split[1] : split[0].replaceFirst(prefix, "");
 
         List<Command> commands = new ArrayList<>();
