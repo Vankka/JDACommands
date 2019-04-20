@@ -199,9 +199,10 @@ public class JDACommands {
 
         List<String> arguments = Arrays.asList(content.contains(" ") ? content.split(" ") : new String[]{content});
         if (mentionPrefix)
-            arguments.remove(0);
+            arguments.remove(0); // remove mention
 
         String cmd = mentionPrefix ? arguments.get(0) : arguments.get(0).replaceFirst(prefix, "");
+        arguments.remove(0); // remove command
 
         List<Command> commands = new ArrayList<>();
         for (CommandCategory commandCategory : commandCategories)
