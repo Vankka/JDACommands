@@ -197,7 +197,7 @@ public class JDACommands {
         if (!content.startsWith(prefix) && !mentionPrefix)
             return;
 
-        String[] split = content.contains(" ") ? content.split(" ") : new String[0];
+        String[] split = content.contains(" ") ? content.split(" ") : new String[]{content};
         String cmd = mentionPrefix ? split[1] : split[0].replaceFirst(prefix, "");
 
         List<Command> commands = new ArrayList<>();
