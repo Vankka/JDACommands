@@ -223,6 +223,19 @@ public class JDACommands {
         if (properties.contains(CommandProperty.BOT_OWNER) && !event.getAuthor().getId().equals(ownerId))
             return;
 
+        List<Permission> missingPermissions = new ArrayList<>();
+        for (Permission permission : command.getBotRequiredPermissions()) {
+            if (!event.getGuild().getSelfMember().hasPermission(event.getTextChannel(), permission))
+                missingPermissions.add(permission);
+        }
+
+        if (!missingPermissions.isEmpty()) {
+            sendMessageSafely(event, Emoji.X + " Missing permissions, "
+                    + "`" + missingPermissions.stream().map(Permission::getName)
+                    .collect(Collectors.joining(", ")) + "`");
+            return;
+        }
+
         try {
             defaultResultHandler(event, command.execute(event, arguments));
         } catch (PermissionException exception) {
