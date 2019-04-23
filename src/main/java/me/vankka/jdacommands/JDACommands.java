@@ -204,7 +204,7 @@ public class JDACommands {
         if (mentionPrefix)
             arguments.remove(0); // remove mention
 
-        String cmd = mentionPrefix ? arguments.get(0) : arguments.get(0).replaceFirst(prefix, "");
+        String cmd = mentionPrefix ? arguments.get(0) : replaceFirst(arguments.get(0), prefix, "");
         arguments.remove(0); // remove command
 
         List<Command> commands = new ArrayList<>();
