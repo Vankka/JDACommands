@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -318,6 +319,10 @@ public class JDACommands {
 
     public boolean hasPermission(TextChannel textChannel, Member member, Permission... permissions) {
         return member.hasPermission(textChannel, permissions);
+    }
+
+    private String replaceFirst(String input, String regex, String replacement) {
+        return Pattern.compile(regex, Pattern.LITERAL).matcher(input).replaceFirst(replacement);
     }
 
     @Override
