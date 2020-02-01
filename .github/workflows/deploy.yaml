@@ -15,6 +15,6 @@ jobs:
         run: chmod +x gradlew
       - name: Deploy to Nexus with Gradle
         run: ./gradlew publish
-        env: # Or as an environment variable
+        env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
