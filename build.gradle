@@ -4,7 +4,7 @@ plugins {
 }
 
 compileJava.options.encoding = 'UTF-8'
-group 'me.vankka'
+group 'dev.vankka'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
@@ -31,9 +31,7 @@ publishing {
                 username System.getenv('NEXUS_USERNAME')
                 password System.getenv('NEXUS_PASSWORD')
             }
-            def releasesRepoUrl = "https://nexus.vankka.dev/repository/maven-releases/"
-            def snapshotsRepoUrl = "https://nexus.vankka.dev/repository/maven-snapshots/"
-            url = version.endsWith('-SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            url version.endsWith('-SNAPSHOT') ? 'https://nexus.vankka.dev/repository/maven-snapshots/' : 'https://nexus.vankka.dev/repository/maven-releases/'
         }
     }
 }
