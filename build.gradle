@@ -19,6 +19,12 @@ dependencies {
 }
 
 publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+
     repositories {
         maven {
             credentials {
