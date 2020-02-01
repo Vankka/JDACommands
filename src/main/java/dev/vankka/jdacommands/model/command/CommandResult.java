@@ -4,6 +4,11 @@ import org.jetbrains.annotations.NotNull;
 
 public interface CommandResult {
 
+    enum Generic implements CommandResult {
+        SUCCESS_HANDLED,
+        SUCCESS_CHECK_MARK
+    }
+
     class Error implements CommandResult {
 
         private final Exception exception;
@@ -30,10 +35,5 @@ public interface CommandResult {
         public String getMessage() {
             return message;
         }
-    }
-
-    enum Generic implements CommandResult {
-        SUCCESS_HANDLED,
-        SUCCESS_CHECK_MARK
     }
 }

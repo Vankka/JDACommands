@@ -32,7 +32,7 @@ public class CommandEvent {
     }
 
     public CommandEvent(GenericMessageEvent event, Message message, User author, Member member,
-                         boolean edited, JDACommands jdaCommands, List<String> arguments, String prefix) {
+                        boolean edited, JDACommands jdaCommands, List<String> arguments, String prefix) {
         this.event = event;
         this.message = message;
         this.author = author;

@@ -212,11 +212,11 @@ public class JDACommands implements EventPreprocessor, CommandPreprocessor, Resu
     /**
      * Default {@link EventPreprocessor}
      *
-     * @param event GenericMessageEvent from JDA
+     * @param event   GenericMessageEvent from JDA
      * @param message The message
-     * @param author The message author
-     * @param member The member, may be null
-     * @param edited True if it was a {@link MessageReceivedEvent}, false if it was a {@link MessageUpdateEvent}
+     * @param author  The message author
+     * @param member  The member, may be null
+     * @param edited  True if it was a {@link MessageReceivedEvent}, false if it was a {@link MessageUpdateEvent}
      */
     @Override
     public void preprocessEvent(GenericMessageEvent event, Message message, User author, Member member, boolean edited) {
@@ -267,7 +267,7 @@ public class JDACommands implements EventPreprocessor, CommandPreprocessor, Resu
     /**
      * Default {@link CommandPreprocessor}
      *
-     * @param event CommandEvent
+     * @param event   CommandEvent
      * @param command The command to execute
      */
     @Override

@@ -9,6 +9,7 @@ public interface Command {
 
     /**
      * Description to be displayed on the help command.
+     *
      * @return the description of the command.
      */
     String getDescription();
@@ -20,6 +21,7 @@ public interface Command {
      * @return returns all the aliases
      */
     List<String> getAliases();
+
     List<CommandProperty> getProperties();
 
     /**

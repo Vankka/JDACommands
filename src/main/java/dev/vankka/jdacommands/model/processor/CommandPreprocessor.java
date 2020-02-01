@@ -13,7 +13,7 @@ public interface CommandPreprocessor {
      * Process the CommandEvent to run the Command.
      * Should call the {@link ResultProcessor} after the command has been executed.
      *
-     * @param event The event this execution originated from
+     * @param event   The event this execution originated from
      * @param command The command to be executed by this preprocessor
      */
     void preprocessCommand(CommandEvent event, Command command);

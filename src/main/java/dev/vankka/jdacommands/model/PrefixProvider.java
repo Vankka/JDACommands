@@ -9,7 +9,7 @@ public interface PrefixProvider {
     /**
      * Provides prefixes depending on guild.
      *
-     * @param guild The guild this prefix is being requested for, may be null.
+     * @param guild         The guild this prefix is being requested for, may be null.
      * @param defaultPrefix The default prefix, if no special prefix is specified.
      * @return The prefix returned by this provider.
      */
