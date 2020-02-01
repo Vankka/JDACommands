@@ -1,4 +1,4 @@
-package me.vankka.jdacommands.model;
+package dev.vankka.jdacommands.model.command;
 
 import org.jetbrains.annotations.NotNull;
 

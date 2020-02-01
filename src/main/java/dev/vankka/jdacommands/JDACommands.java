@@ -1,33 +1,28 @@
-package me.vankka.jdacommands;
+package dev.vankka.jdacommands;
 
-import me.vankka.jdacommands.model.*;
-import me.vankka.jdacommands.object.Emoji;
-import net.dv8tion.jda.bot.entities.ApplicationInfo;
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
-import net.dv8tion.jda.core.exceptions.PermissionException;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import dev.vankka.jdacommands.model.PrefixProvider;
+import dev.vankka.jdacommands.model.command.*;
+import dev.vankka.jdacommands.model.processor.CommandPreprocessor;
+import dev.vankka.jdacommands.model.processor.EventPreprocessor;
+import dev.vankka.jdacommands.model.processor.ResultProcessor;
+import dev.vankka.jdacommands.object.Emoji;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.message.GenericMessageEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.exceptions.PermissionException;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class JDACommands {
+public class JDACommands implements EventPreprocessor, CommandPreprocessor, ResultProcessor, PrefixProvider {
 
     private final List<CommandCategory> commandCategories = new ArrayList<>();
     private final CommandListener commandListener = new CommandListener();
@@ -36,18 +31,20 @@ public class JDACommands {
 
     private String defaultPrefix = "!";
     private boolean allowMentionAsPrefix = true;
-    private Consumer<CommandEvent> commandEventProcessor = this::defaultEventProcessor;
-    private Consumer<Exception> errorHandler = this::defaultErrorHandler;
-    private Function<Guild, String> prefixProvider = guild -> defaultPrefix;
 
-    private String ownerId = "";
+    private EventPreprocessor eventPreprocessor = this;
+    private CommandPreprocessor commandPreprocessor = this;
+    private ResultProcessor resultProcessor = this;
+    private PrefixProvider prefixProvider = this;
+
+    private String botOwnerId = "";
 
     public JDACommands(ShardManager shardManager) {
         this.shardManager = shardManager;
         this.jda = null;
 
         shardManager.addEventListener(commandListener);
-        reloadBotOwners();
+        reloadBotOwner();
     }
 
     public JDACommands(JDA jda) {
@@ -55,14 +52,23 @@ public class JDACommands {
         this.jda = jda;
 
         jda.addEventListener(commandListener);
-        reloadBotOwners();
+        reloadBotOwner();
     }
 
-    public void reloadBotOwners() {
+    public void reloadBotOwner() {
         JDA jda = this.shardManager != null ? this.shardManager.getShardById(0) : this.jda;
 
-        ApplicationInfo applicationInfo = jda.asBot().getApplicationInfo().complete();
-        ownerId = applicationInfo.getOwner().getId();
+        ApplicationInfo applicationInfo = Objects.requireNonNull(jda).retrieveApplicationInfo().complete();
+        botOwnerId = applicationInfo.getOwner().getId();
+    }
+
+    /**
+     * Gets the Bot's owner's id.
+     *
+     * @return The bot's owner's id
+     */
+    public String getBotOwnerId() {
+        return botOwnerId;
     }
 
     /**
@@ -120,64 +126,79 @@ public class JDACommands {
     }
 
     /**
-     * Puts the command through the commandEventProcessor in this JDACommands instance
+     * Get the {@link EventPreprocessor} for this JDACommands instance.
      *
-     * @param commandEvent CommandEvent instance
+     * @return the EventProcessor for this JDACommands instance
      */
-    public void executeCommand(CommandEvent commandEvent) {
-        commandEventProcessor.accept(commandEvent);
+    public EventPreprocessor getEventPreprocessor() {
+        return eventPreprocessor;
     }
 
     /**
-     * Sets the commandEventProcessor for this JDACommands instance
+     * Set the {@link EventPreprocessor} for this JDACommands instance.
      *
-     * @param commandEventProcessor the new commandEventProcessor for this JDACommands instance
+     * @param eventPreprocessor the new EventProcessor for this JDACommands instance
      */
-    public void setCommandEventConsumer(Consumer<CommandEvent> commandEventProcessor) {
-        if (commandEventProcessor == null)
-            throw new NullPointerException("commandEventProcessor cannot be null");
-        this.commandEventProcessor = commandEventProcessor;
+    public void setEventPreprocessor(EventPreprocessor eventPreprocessor) {
+        this.eventPreprocessor = eventPreprocessor;
     }
 
     /**
-     * Handles a error with the errorHandler in this JDACommands instance
+     * Get the {@link CommandPreprocessor} for this JDACommands instance.
      *
-     * @param exception the error to be handled
+     * @return the CommandPreprocessor for this JDACommands instance.
      */
-    public void handleError(Exception exception) {
-        errorHandler.accept(exception);
+    public CommandPreprocessor getCommandPreprocessor() {
+        return commandPreprocessor;
     }
 
     /**
-     * Sets the errorHandler for this JDACommands instance
+     * Set the {@link CommandPreprocessor} for this JDACommands instance.
      *
-     * @param errorHandler the new errorHandler for this JDACommands instance
+     * @param commandPreprocessor the new CommandPreprocessor for this JDACommands instance
      */
-    public void setErrorHandler(Consumer<Exception> errorHandler) {
-        this.errorHandler = errorHandler;
+    public void setCommandPreprocessor(CommandPreprocessor commandPreprocessor) {
+        this.commandPreprocessor = commandPreprocessor;
     }
 
     /**
-     * Gets the prefix for a guild from the prefixProvider in this JDACommands instance
+     * Gets the {@link ResultProcessor} for this JDACommands instance.
      *
-     * @param guild the possibly-null Guild
-     * @return the non-null prefix for the provided guild
+     * @return the ResultProcessor for this JDACommands instance.
      */
-    public String getPrefix(@Nullable Guild guild) {
-        return prefixProvider.apply(guild);
+    public ResultProcessor getResultProcessor() {
+        return resultProcessor;
     }
 
     /**
-     * Sets the prefixProvider for this JDACommands instance
+     * Sets the {@link ResultProcessor} for this JDACommands instance.
      *
-     * @param prefixProvider the new prefixProvider for this JDACommands instance
+     * @param resultProcessor the new ResultProcessor for this JDACommands instance.
      */
-    public void setPrefixProvider(Function<@Nullable Guild, @NotNull String> prefixProvider) {
+    public void setResultProcessor(ResultProcessor resultProcessor) {
+        this.resultProcessor = resultProcessor;
+    }
+
+    /**
+     * Gets the {@link PrefixProvider} for this JDACommands instance.
+     *
+     * @return the PrefixProvider for this JDACommands instance.
+     */
+    public PrefixProvider getPrefixProvider() {
+        return prefixProvider;
+    }
+
+    /**
+     * Sets the {@link PrefixProvider} for this JDACommands instance.
+     *
+     * @param prefixProvider the new PrefixProvider for this JDACommands instance.
+     */
+    public void setPrefixProvider(PrefixProvider prefixProvider) {
         this.prefixProvider = prefixProvider;
     }
 
     /**
-     * Removes the command listener from the ShardManager or JDA instance
+     * Removes the command listener from the ShardManager or JDA instance.
      */
     @SuppressWarnings("WeakerAccess")
     public void shutdown() {
@@ -188,11 +209,28 @@ public class JDACommands {
             jda.removeEventListener(commandListener);
     }
 
-    public void defaultEventProcessor(CommandEvent event) {
-        String content = event.getMessage().getContentRaw();
+    /**
+     * Default {@link EventPreprocessor}
+     *
+     * @param event GenericMessageEvent from JDA
+     * @param message The message
+     * @param author The message author
+     * @param member The member, may be null
+     * @param edited True if it was a {@link MessageReceivedEvent}, false if it was a {@link MessageUpdateEvent}
+     */
+    @Override
+    public void preprocessEvent(GenericMessageEvent event, Message message, User author, Member member, boolean edited) {
+        String content = message.getContentRaw();
 
-        String prefix = prefixProvider.apply(event.getGuild());
-        String mention = event.getGuild() != null ? event.getGuild().getSelfMember()
+        Guild guild;
+        try {
+            guild = event.getGuild();
+        } catch (IllegalStateException ignored) {
+            guild = null;
+        }
+
+        String prefix = prefixProvider.providePrefix(guild, defaultPrefix);
+        String mention = guild != null ? event.getGuild().getSelfMember()
                 .getAsMention() : event.getJDA().getSelfUser().getAsMention();
 
         boolean mentionPrefix = content.contains(" ") && content.startsWith(mention) && allowMentionAsPrefix;
@@ -204,7 +242,8 @@ public class JDACommands {
         if (mentionPrefix)
             arguments.remove(0); // remove mention
 
-        String cmd = mentionPrefix ? arguments.get(0) : replaceFirst(arguments.get(0), prefix, "");
+        String cmd = mentionPrefix ? arguments.get(0) : Pattern.compile(prefix, Pattern.LITERAL)
+                .matcher(arguments.get(0)).replaceFirst("");
         arguments.remove(0); // remove command
 
         List<Command> commands = new ArrayList<>();
@@ -212,15 +251,31 @@ public class JDACommands {
             commands.addAll(commandCategory.getCommands());
 
         Command command = commands.stream()
-                .filter(c -> c.getAliases().stream().anyMatch(format -> format.equalsIgnoreCase(cmd)))
+                .filter(c -> c.getAliases().stream().anyMatch(format -> format.contains(" ")
+                        ? format.split(" ")[0].equalsIgnoreCase(cmd)
+                        : format.equalsIgnoreCase(cmd)))
                 .findAny().orElse(null);
         if (command == null)
             return;
 
+        CommandEvent commandEvent = new CommandEvent(event, message, author,
+                member, edited, this, arguments, prefix);
+
+        commandPreprocessor.preprocessCommand(commandEvent, command);
+    }
+
+    /**
+     * Default {@link CommandPreprocessor}
+     *
+     * @param event CommandEvent
+     * @param command The command to execute
+     */
+    @Override
+    public void preprocessCommand(CommandEvent event, Command command) {
         List<CommandProperty> properties = command.getProperties();
         if (properties.contains(CommandProperty.GUILD_ONLY) && event.getGuild() == null)
             return;
-        if (properties.contains(CommandProperty.BOT_OWNER) && !event.getAuthor().getId().equals(ownerId))
+        if (properties.contains(CommandProperty.BOT_OWNER_ONLY) && !event.getAuthor().getId().equals(botOwnerId))
             return;
 
         List<Permission> missingPermissions = new ArrayList<>();
@@ -230,25 +285,20 @@ public class JDACommands {
         }
 
         if (!missingPermissions.isEmpty()) {
-            sendMessageSafely(event, Emoji.X + " Missing permissions, "
-                    + "`" + missingPermissions.stream().map(Permission::getName)
-                    .collect(Collectors.joining(", ")) + "`");
+            resultProcessor.processMissingPermission(missingPermissions, event);
             return;
         }
 
         try {
-            defaultResultHandler(event, command.execute(event, arguments));
+            resultProcessor.processResult(command.execute(event), event);
         } catch (PermissionException exception) {
-            sendMessageSafely(event, Emoji.X + " Missing permission, " +
-                    "`" + exception.getPermission().getName() + "`");
+            resultProcessor.processMissingPermission(Collections.singletonList(exception.getPermission()), event);
         }
     }
 
-    public void defaultErrorHandler(Exception exception) {
-        exception.printStackTrace();
-    }
-
-    public void defaultResultHandler(CommandEvent event, CommandResult commandResult) {
+    // ResultProcessor
+    @Override
+    public void processResult(CommandResult commandResult, CommandEvent event) {
         if (commandResult instanceof CommandResult.Error) {
             CommandResult.Error error = (CommandResult.Error) commandResult;
 
@@ -266,6 +316,13 @@ public class JDACommands {
                     break;
             }
         }
+    }
+
+    @Override
+    public void processMissingPermission(List<Permission> missingPermissions, CommandEvent event) {
+        sendMessageSafely(event, Emoji.X + " Missing permission" + (missingPermissions.size() == 1 ? "" : "s")
+                + ", " + "`" + missingPermissions.stream()
+                .map(Permission::getName).collect(Collectors.joining(", ")) + "`");
     }
 
     public void handleSuccessCheckMark(CommandEvent event) {
@@ -334,24 +391,36 @@ public class JDACommands {
         return member.hasPermission(textChannel, permissions);
     }
 
-    private String replaceFirst(String input, String regex, String replacement) {
-        return Pattern.compile(regex, Pattern.LITERAL).matcher(input).replaceFirst(replacement);
+    /**
+     * Default {@link PrefixProvider},
+     *
+     * @param guild Guild context
+     * @return The prefix for the guild, otherwise the defaultPrefix
+     */
+    @Override
+    public String providePrefix(Guild guild, String defaultPrefix) {
+        return defaultPrefix;
     }
 
+    // shutdown on finalize
+    @SuppressWarnings("deprecation") // Newer Java versions
     @Override
     protected void finalize() {
         shutdown();
     }
 
+    // CommandListener, hidden to keep people from registering it twice
     private class CommandListener extends ListenerAdapter {
         @Override
-        public void onMessageReceived(MessageReceivedEvent event) {
-            commandEventProcessor.accept(new CommandEvent(event));
+        public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+            eventPreprocessor.preprocessEvent(event, event.getMessage(),
+                    event.getAuthor(), event.getMember(), false);
         }
 
         @Override
-        public void onMessageUpdate(MessageUpdateEvent event) {
-            commandEventProcessor.accept(new CommandEvent(event));
+        public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
+            eventPreprocessor.preprocessEvent(event, event.getMessage(),
+                    event.getAuthor(), event.getMember(), true);
         }
     }
 }

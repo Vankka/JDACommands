@@ -1,7 +1,9 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
+compileJava.options.encoding = 'UTF-8'
 group 'me.vankka'
 version '1.0-SNAPSHOT'
 
@@ -13,5 +15,19 @@ repositories {
 }
 
 dependencies {
-    compile ('net.dv8tion:JDA:3.8.3_462') { exclude module: 'opus-java' }
+    compile ('net.dv8tion:JDA:4.1.1_101') { exclude module: 'opus-java' }
+}
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username System.getenv('NEXUS_USERNAME')
+                password System.getenv('NEXUS_PASSWORD')
+            }
+            def releasesRepoUrl = "https://nexus.vankka.dev/repository/maven-releases/"
+            def snapshotsRepoUrl = "https://nexus.vankka.dev/repository/maven-snapshots/"
+            url = version.endsWith('-SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
 }
